@@ -1,11 +1,23 @@
 //! Discover Bluetooth devices and list them.
 
-use bluer::{Adapter, AdapterEvent, Address, DeviceEvent};
+use bluer::{Adapter, AdapterEvent, Address, DeviceEvent, Device};
 use futures::{pin_mut, stream::SelectAll, StreamExt};
 use std::{collections::HashSet, env};
 use tokio;
 
-async fn addr_is_airtag(addr: Ad)
+async fn addr_is_airtag(device: Device) -> bool {
+
+    // Get the Manufacturer Data & RSSSI
+    let Ok(Some(manufacturer_data)) = device.manufacturer_data().await else { return false };
+    let Ok(Some(rssi_data)) = device.manufacturer_data().await else { return false };
+
+
+    return true;
+
+
+
+
+}
 
 async fn query_device(adapter: &Adapter, addr: Address) -> bluer::Result<()> {
     let device = adapter.device(addr)?;
