@@ -89,7 +89,9 @@ async fn query_device(adapter: &Adapter, addr: Address, count: &mut i32) -> blue
                                 match ch.write_ext(&[0xAF], &bluer::gatt::remote::CharacteristicWriteRequest{
                                     offset: 0,
                                     op_type: bluer::gatt::WriteOp::Request,
-                                    
+                                    prepare_authorize: false,
+                                    _non_exhaustive: (),
+
                                 }).await {
                                     Ok(_) => println!("WROTE IT"),
                                     Err(e) => println!("Failed to write: {:?}", e),
