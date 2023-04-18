@@ -19,6 +19,10 @@ async fn main() {
 
     let Ok(mut events) = ble_adapter.events().await else { panic!("Unable to register event handler") };
 
+    // Note: As per btleplug docs, ScanFilter is platform dependent.
+    // In some cases, empty ScanFilter may cause problems, but supplying a 
+    // ScanFilter doesn't guarantee results would actually match the filter...
+    // So we still need to have other logic to check device, services etc.
     if let Err(e) = ble_adapter.start_scan(btleplug::api::ScanFilter { services: vec![AIRTAG_SOUND_SERVICE] }).await {
         panic!("Unable to start scan! {:?}", e);
     }
