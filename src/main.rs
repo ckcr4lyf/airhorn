@@ -32,6 +32,31 @@ async fn main() {
     while let Some(event) = events.next().await {
         match event {
             CentralEvent::ManufacturerDataAdvertisement { id, manufacturer_data } => {
+
+                if airtag::airtag::is_airtag(&manufacturer_data) == false {
+                    continue;
+                }
+
+                // Found an airtag, stop current scan
+                if let Err(e) = ble_adapter.stop_scan().await {
+                    println!("Failed to stop scan: {:?}", e);
+                    continue;
+                }
+
+                // Try and connect to it
+                let peripheral = match ble_adapter.peripheral(&id).await {
+                    Ok(p) => p,
+                    Err(e) => {
+                        println!("Failed to get peripheral! {:?}", e);
+                        continue;
+                    }
+                };
+
+                
+
+
+
+
                 
             }
             _ => println!("Got an event!"),
