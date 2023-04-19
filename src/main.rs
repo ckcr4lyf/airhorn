@@ -1,10 +1,8 @@
-use btleplug::api::{Manager as _, Central as _, CentralEvent};
+use btleplug::api::{Manager as _, Central as _, CentralEvent, Peripheral};
 use btleplug::platform::{Manager, Adapter};
 use futures::StreamExt;
 
 mod airtag;
-
-const AIRTAG_SOUND_SERVICE: uuid::Uuid = uuid::uuid!("7dfc9000-7d1c-4951-86aa-8d9728f8d66c");
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
@@ -25,7 +23,7 @@ async fn main() {
     // In some cases, empty ScanFilter may cause problems, but supplying a 
     // ScanFilter doesn't guarantee results would actually match the filter...
     // So we still need to have other logic to check device, services etc.
-    if let Err(e) = ble_adapter.start_scan(btleplug::api::ScanFilter { services: vec![AIRTAG_SOUND_SERVICE] }).await {
+    if let Err(e) = ble_adapter.start_scan(btleplug::api::ScanFilter { services: vec![airtag::constants::AIRTAG_SOUND_SERVICE] }).await {
         panic!("Unable to start scan! {:?}", e);
     }
 
@@ -43,7 +41,7 @@ async fn main() {
                     continue;
                 }
 
-                // Try and connect to it
+                // Get the peripheral
                 let peripheral = match ble_adapter.peripheral(&id).await {
                     Ok(p) => p,
                     Err(e) => {
@@ -52,6 +50,19 @@ async fn main() {
                     }
                 };
 
+                // Connect to it
+                if let Err(e) = peripheral.connect().await {
+                    println!("Failed to connect to device! {:?}", e);
+                    continue;
+                }
+
+                // Discover services
+                if let Err(e) = peripheral.discover_services().await {
+                    println!("Failed to discover services! {:?}", e);
+                    continue;
+                }
+
+                // Loop over characteristics, try and find play sound characteristic
                 
 
 

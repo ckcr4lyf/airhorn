@@ -1,0 +1,1 @@
+pub const AIRTAG_SOUND_SERVICE: uuid::Uuid = uuid::uuid!("7dfc9000-7d1c-4951-86aa-8d9728f8d66c");
