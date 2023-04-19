@@ -30,12 +30,12 @@ async fn main() {
     while let Some(event) = events.next().await {
         match event {
             CentralEvent::ManufacturerDataAdvertisement { id, manufacturer_data } => {
-
                 if airtag::airtag::is_airtag(&manufacturer_data) == false {
                     continue;
                 }
 
                 // Found an airtag, stop current scan
+                // TBD Do we need to stop
                 if let Err(e) = ble_adapter.stop_scan().await {
                     println!("Failed to stop scan: {:?}", e);
                     continue;
@@ -63,12 +63,16 @@ async fn main() {
                 }
 
                 // Loop over characteristics, try and find play sound characteristic
-                
+                for characteristic in peripheral.characteristics() {
+                    if characteristic.uuid == airtag::constants::AIRTAG_SOUND_CHARACTERISTIC {
+                        if let Err(e) = peripheral.write(&characteristic, &airtag::constants::AIRTAG_PLAY_SOUND, btleplug::api::WriteType::WithResponse).await {
+                            println!("Failed to write characteristic! {:?}", e);
+                            continue;
+                        }
+                    }
+                }
 
-
-
-
-                
+                // Success!                
             }
             _ => println!("Got an event!"),
         }
