@@ -1,6 +1,8 @@
-use btleplug::api::{Manager as _, Central as _};
+use btleplug::api::{Manager as _, Central as _, CentralEvent};
 use btleplug::platform::{Manager, Adapter};
 use futures::StreamExt;
+
+mod airtag;
 
 const AIRTAG_SOUND_SERVICE: uuid::Uuid = uuid::uuid!("7dfc9000-7d1c-4951-86aa-8d9728f8d66c");
 
@@ -29,6 +31,9 @@ async fn main() {
 
     while let Some(event) = events.next().await {
         match event {
+            CentralEvent::ManufacturerDataAdvertisement { id, manufacturer_data } => {
+                
+            }
             _ => println!("Got an event!"),
         }
     }
