@@ -1,8 +1,15 @@
 use btleplug::api::{Manager as _, Central as _, CentralEvent, Peripheral};
 use btleplug::platform::{Manager, Adapter};
 use futures::StreamExt;
+use tokio;
 
 mod airtag;
+
+async fn must_start_scan(adapter: &Adapter) {
+if let Err(e) = adapter.start_scan(btleplug::api::ScanFilter { services: vec![airtag::constants::AIRTAG_SOUND_SERVICE] }).await {
+        panic!("Unable to start scan! {:?}", e);
+    }
+}
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
@@ -27,6 +34,8 @@ async fn main() {
         panic!("Unable to start scan! {:?}", e);
     }
 
+    println!("Starting...");
+
     while let Some(event) = events.next().await {
         match event {
             CentralEvent::ManufacturerDataAdvertisement { id, manufacturer_data } => {
@@ -35,7 +44,9 @@ async fn main() {
                 }
 
                 // Found an airtag, stop current scan
-                // TBD Do we need to stop
+                println!("Found airtag!");
+
+                // TBD Do we need to stop the scan really?
                 if let Err(e) = ble_adapter.stop_scan().await {
                     println!("Failed to stop scan: {:?}", e);
                     continue;
@@ -46,6 +57,7 @@ async fn main() {
                     Ok(p) => p,
                     Err(e) => {
                         println!("Failed to get peripheral! {:?}", e);
+                        must_start_scan(&ble_adapter).await;
                         continue;
                     }
                 };
@@ -56,9 +68,12 @@ async fn main() {
                     continue;
                 }
 
+                println!("Connected to device!");
+
                 // Discover services
                 if let Err(e) = peripheral.discover_services().await {
                     println!("Failed to discover services! {:?}", e);
+                    must_start_scan(&ble_adapter).await;
                     continue;
                 }
 
@@ -67,14 +82,25 @@ async fn main() {
                     if characteristic.uuid == airtag::constants::AIRTAG_SOUND_CHARACTERISTIC {
                         if let Err(e) = peripheral.write(&characteristic, &airtag::constants::AIRTAG_PLAY_SOUND, btleplug::api::WriteType::WithResponse).await {
                             println!("Failed to write characteristic! {:?}", e);
+                            must_start_scan(&ble_adapter).await;
                             continue;
                         }
+
+                        println!("Playing sound...");
                     }
                 }
 
-                // Success!                
-            }
-            _ => println!("Got an event!"),
+                // Success!
+                if let Err(e) = peripheral.disconnect().await {
+                    println!("Failed to disconnect! {:?}", e);
+                    must_start_scan(&ble_adapter).await;
+                    continue;
+                }
+
+                // Start scan again
+                must_start_scan(&ble_adapter).await;
+            },
+            _ => (),
         }
     }
 }
