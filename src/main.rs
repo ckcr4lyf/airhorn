@@ -9,7 +9,8 @@ mod airtag;
 async fn must_start_scan(adapter: &Adapter) {
 // if let Err(e) = adapter.start_scan(btleplug::api::ScanFilter { services: vec![airtag::constants::AIRTAG_SOUND_SERVICE] }).await {
 if let Err(e) = adapter.start_scan(btleplug::api::ScanFilter::default()).await {
-        panic!("Unable to start scan! {:?}", e);
+        log::error!("Unable to start scan! {:?}", e);
+        std::process::exit(-1);
     }
 }
 
@@ -23,9 +24,15 @@ async fn main() {
     let ble_adapter: Adapter = match ble_manager.adapters().await {
         Ok(adapters) => match adapters.into_iter().nth(0) {
             Some(adapter) => adapter,
-            None => panic!("No BLE adapter found!"),
+            None => {
+                log::error!("No BLE adapter found!");
+                std::process::exit(-1);
+            }
         },
-        Err(e) => panic!("Unable to get list of BLE adapters! {:?}", e),
+        Err(e) => {
+            log::error!("Unable to get list of BLE adapters! {:?}", e);
+            std::process::exit(-1);
+        }
     };
 
     let Ok(mut events) = ble_adapter.events().await else { panic!("Unable to register event handler") };
@@ -36,7 +43,8 @@ async fn main() {
     // So we still need to have other logic to check device, services etc.
     // if let Err(e) = ble_adapter.start_scan(btleplug::api::ScanFilter { services: vec![airtag::constants::AIRTAG_SOUND_SERVICE] }).await {
     if let Err(e) = ble_adapter.start_scan(btleplug::api::ScanFilter::default()).await {
-        panic!("Unable to start scan! {:?}", e);
+        log::error!("Unable to start scan! {:?}", e);
+        std::process::exit(-1);
     }
 
     log::info!("Starting scan...");
