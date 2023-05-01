@@ -50,11 +50,11 @@ async fn main() {
                 }
 
                 // Found an airtag, stop current scan
-                println!("Found airtag!");
+                log::info!("Found airtag! Stopping scan...");
 
-                // // TBD Do we need to stop the scan really?
+                // TBD Do we need to stop the scan really?
                 if let Err(e) = ble_adapter.stop_scan().await {
-                    println!("Failed to stop scan: {:?}", e);
+                    log::error!("Failed to stop scan: {:?}", e);
                     continue;
                 }
 
@@ -62,7 +62,7 @@ async fn main() {
                 let peripheral = match ble_adapter.peripheral(&id).await {
                     Ok(p) => p,
                     Err(e) => {
-                        println!("Failed to get peripheral! {:?}", e);
+                        log::error!("Failed to get peripheral! {:?}", e);
                         must_start_scan(&ble_adapter).await;
                         continue;
                     }
@@ -70,15 +70,15 @@ async fn main() {
 
                 // Connect to it
                 if let Err(e) = peripheral.connect().await {
-                    println!("Failed to connect to device! {:?}", e);
+                    log::error!("Failed to connect to device! {:?}", e);
                     continue;
                 }
 
-                println!("Connected to device!");
+                log::info!("Connected to device!");
 
                 // Discover services
                 if let Err(e) = peripheral.discover_services().await {
-                    println!("Failed to discover services! {:?}", e);
+                    log::error!("Failed to discover services! {:?}", e);
                     must_start_scan(&ble_adapter).await;
                     continue;
                 }
@@ -87,25 +87,23 @@ async fn main() {
                 for characteristic in peripheral.characteristics() {
                     if characteristic.uuid == airtag::constants::AIRTAG_SOUND_CHARACTERISTIC {
                         if let Err(e) = peripheral.write(&characteristic, &airtag::constants::AIRTAG_PLAY_SOUND, btleplug::api::WriteType::WithResponse).await {
-                            println!("Failed to write characteristic! {:?}", e);
+                            log::error!("Failed to write characteristic! {:?}", e);
                             must_start_scan(&ble_adapter).await;
                             continue;
                         }
 
-                        println!("Playing sound...");
+                        log::info!("Playing sound...");
                     }
                 }
 
                 // Success!
                 if let Err(e) = peripheral.disconnect().await {
-                    println!("Failed to disconnect! {:?}", e);
+                    log::error!("Failed to disconnect! {:?}", e);
                     must_start_scan(&ble_adapter).await;
                     continue;
                 }
 
-                // println!("End");
-                // Start scan again
-                println!("Starting scan again");
+                log::info!("Starting scan again");
                 must_start_scan(&ble_adapter).await;
             },
             _ => (),
