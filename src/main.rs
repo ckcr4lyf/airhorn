@@ -2,17 +2,21 @@ use btleplug::api::{Manager as _, Central as _, CentralEvent, Peripheral};
 use btleplug::platform::{Manager, Adapter};
 use futures::StreamExt;
 use tokio;
+use env_logger;
 
 mod airtag;
 
 async fn must_start_scan(adapter: &Adapter) {
-if let Err(e) = adapter.start_scan(btleplug::api::ScanFilter { services: vec![airtag::constants::AIRTAG_SOUND_SERVICE] }).await {
+// if let Err(e) = adapter.start_scan(btleplug::api::ScanFilter { services: vec![airtag::constants::AIRTAG_SOUND_SERVICE] }).await {
+if let Err(e) = adapter.start_scan(btleplug::api::ScanFilter::default()).await {
         panic!("Unable to start scan! {:?}", e);
     }
 }
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
+
+    env_logger::init();
 
     let Ok(ble_manager) = Manager::new().await else { panic!("Unable to create BLE manager") };
     
@@ -35,12 +39,12 @@ async fn main() {
         panic!("Unable to start scan! {:?}", e);
     }
 
-    println!("Starting. scan..");
+    log::info!("Starting scan...");
 
     while let Some(event) = events.next().await {
         match event {
             CentralEvent::ManufacturerDataAdvertisement { id, manufacturer_data } => {
-                println!("ManufacturerDataAdvertisement: {:02X?}", manufacturer_data);
+                log::debug!("ManufacturerDataAdvertisement: {:02X?}", manufacturer_data);
                 if airtag::airtag::is_airtag(&manufacturer_data) == false {
                     continue;
                 }
@@ -48,7 +52,7 @@ async fn main() {
                 // Found an airtag, stop current scan
                 println!("Found airtag!");
 
-                // TBD Do we need to stop the scan really?
+                // // TBD Do we need to stop the scan really?
                 if let Err(e) = ble_adapter.stop_scan().await {
                     println!("Failed to stop scan: {:?}", e);
                     continue;
@@ -99,6 +103,7 @@ async fn main() {
                     continue;
                 }
 
+                // println!("End");
                 // Start scan again
                 println!("Starting scan again");
                 must_start_scan(&ble_adapter).await;
