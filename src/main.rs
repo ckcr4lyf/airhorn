@@ -30,15 +30,17 @@ async fn main() {
     // In some cases, empty ScanFilter may cause problems, but supplying a 
     // ScanFilter doesn't guarantee results would actually match the filter...
     // So we still need to have other logic to check device, services etc.
-    if let Err(e) = ble_adapter.start_scan(btleplug::api::ScanFilter { services: vec![airtag::constants::AIRTAG_SOUND_SERVICE] }).await {
+    // if let Err(e) = ble_adapter.start_scan(btleplug::api::ScanFilter { services: vec![airtag::constants::AIRTAG_SOUND_SERVICE] }).await {
+    if let Err(e) = ble_adapter.start_scan(btleplug::api::ScanFilter::default()).await {
         panic!("Unable to start scan! {:?}", e);
     }
 
-    println!("Starting...");
+    println!("Starting. scan..");
 
     while let Some(event) = events.next().await {
         match event {
             CentralEvent::ManufacturerDataAdvertisement { id, manufacturer_data } => {
+                println!("ManufacturerDataAdvertisement: {:02X?}", manufacturer_data);
                 if airtag::airtag::is_airtag(&manufacturer_data) == false {
                     continue;
                 }
@@ -98,6 +100,7 @@ async fn main() {
                 }
 
                 // Start scan again
+                println!("Starting scan again");
                 must_start_scan(&ble_adapter).await;
             },
             _ => (),
