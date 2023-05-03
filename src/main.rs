@@ -52,7 +52,7 @@ async fn main() {
     while let Some(event) = events.next().await {
         match event {
             CentralEvent::ManufacturerDataAdvertisement { id, manufacturer_data } => {
-                log::debug!("ManufacturerDataAdvertisement: {:02X?}", manufacturer_data);
+                log::trace!("ManufacturerDataAdvertisement: {:02X?}", manufacturer_data);
                 if airtag::airtag::is_airtag(&manufacturer_data) == false {
                     continue;
                 }
