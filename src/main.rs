@@ -79,6 +79,7 @@ async fn main() {
                 // Connect to it
                 if let Err(e) = peripheral.connect().await {
                     log::error!("Failed to connect to device! {:?}", e);
+                    must_start_scan(&ble_adapter).await;
                     continue;
                 }
 
